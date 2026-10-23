@@ -31,7 +31,7 @@ Reemplaza la pantalla de inicio de fábrica por una más liviana y pensada para 
 
 | | Antes (launcher de ADAYO) | Ahora (este launcher) |
 |---|---|---|
-| RAM del launcher (PSS) | 17–22 MB | **8,4 MB** |
+| RAM del launcher (PSS) | 22,3 MB | **8,4 MB** (2,7 veces menos) |
 | CPU con el inicio en pantalla | — | **0 %** |
 | Tamaño del APK | — | **118 KB** |
 | Velocidad del GPS en el inicio | no | **sí** |
