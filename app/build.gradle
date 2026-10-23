@@ -1,0 +1,37 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.swift.radiohome'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.swift.radiohome'
+        // ADAYO AC822X: Android 4.2.2 (API 17), 800x480 at 160 dpi.
+        minSdk 17
+        targetSdk 34
+        versionCode 8
+        versionName '1.7'
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
+            // Sideloaded over ADB, never published.
+            signingConfig signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    lint {
+        // targetSdk 34 on an API 17 device is deliberate; the launcher never goes to the Play Store.
+        abortOnError false
+    }
+}
