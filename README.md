@@ -4,17 +4,23 @@ Un launcher hecho a medida para la radio **ADAYO AC822X** (la del Suzuki Swift):
 pantalla de 800 × 480, 850 MB de RAM y un procesador de 4 núcleos Cortex‑A7 a 1 GHz.
 Reemplaza la pantalla de inicio de fábrica por una más liviana y pensada para manejar.
 
-## Antes y ahora
+## Antes: el launcher de fábrica de ADAYO
 
-| Antes: launcher de fábrica de ADAYO | Ahora: este launcher |
-|---|---|
-| ![Pantalla de inicio original de ADAYO](docs/antes.png) | ![Pantalla de inicio de este launcher](docs/despues.png) |
+<img src="docs/antes.png" width="600" alt="Pantalla de inicio original de ADAYO">
 
-### Pantallas del launcher nuevo
+## Ahora: este launcher
 
-| Todas las apps (nuevo) | Apps abiertas, con la RAM de cada una (nuevo) |
-|---|---|
-| ![Todas las apps del launcher nuevo](docs/todas.png) | ![Apps abiertas del launcher nuevo](docs/abiertas.png) |
+**Inicio:** velocidad del GPS en grande, hora, Wi‑Fi, Bluetooth, luna y apps abiertas arriba; botones grandes abajo.
+
+<img src="docs/despues.png" width="600" alt="Pantalla de inicio del launcher nuevo">
+
+**Todas las apps:**
+
+<img src="docs/todas.png" width="600" alt="Todas las apps en el launcher nuevo">
+
+**Apps abiertas,** con la RAM que usa cada una y un toque para cerrarlas:
+
+<img src="docs/abiertas.png" width="600" alt="Apps abiertas en el launcher nuevo">
 
 ## Qué tiene ahora que ADAYO no tenía
 
