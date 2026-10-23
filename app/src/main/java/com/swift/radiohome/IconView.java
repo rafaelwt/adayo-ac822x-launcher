@@ -14,7 +14,8 @@ import android.view.View;
  */
 final class IconView extends View {
     static final int NAV = 0, MUSIC = 1, RADIO = 2, PHONE = 3, BLUETOOTH = 4, USB = 5, EQ = 6, GRID = 7, BACK = 8,
-            GPS = 9, PLAY = 10, WIFI = 11, STACK = 12, CLOSE = 13, GEAR = 14, MOON = 15;
+            GPS = 9, PLAY = 10, WIFI = 11, STACK = 12, CLOSE = 13, GEAR = 14, MOON = 15, TV = 16, MOVIE = 17,
+            TV_MOVIE = 18;
 
     private final int icon;
     private final float strokeWidth;
@@ -117,6 +118,22 @@ final class IconView extends View {
                 poly(10, 9, 15, 12, 10, 15);
                 path.close();
                 break;
+            case TV: // screen with an antenna: live channels
+                tv();
+                break;
+            case MOVIE: // clapperboard: films and series
+                rect.set(3, 11, 21, 21);
+                path.addRoundRect(rect, 2, 2, Path.Direction.CW);
+                poly(3, 11, 2.2f, 8.4f, 19.2f, 3.4f, 20.2f, 6);
+                path.close();
+                line(7, 6.8f, 9, 9.6f);
+                line(12.6f, 5.2f, 14.6f, 8);
+                break;
+            case TV_MOVIE: // the TV with a ▶ inside: apps with both
+                tv();
+                poly(10, 11, 15, 14, 10, 17);
+                path.close();
+                break;
             case WIFI:
                 arc(14);
                 arc(9);
@@ -173,6 +190,12 @@ final class IconView extends View {
     private void poly(float... xy) {
         path.moveTo(xy[0], xy[1]);
         for (int i = 2; i < xy.length; i += 2) path.lineTo(xy[i], xy[i + 1]);
+    }
+
+    private void tv() {
+        rect.set(2, 7, 22, 21);
+        path.addRoundRect(rect, 3, 3, Path.Direction.CW);
+        poly(7.5f, 2.5f, 12, 7, 16.5f, 2.5f);
     }
 
     private void line(float x1, float y1, float x2, float y2) {

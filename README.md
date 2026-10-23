@@ -18,9 +18,14 @@ Reemplaza la pantalla de inicio de fábrica por una más liviana y pensada para 
 
 <img src="docs/todas.png" width="600" alt="Todas las apps en el launcher nuevo">
 
-**Apps abiertas,** con la RAM que usa cada una y un toque para cerrarlas:
+**Apps abiertas,** con la RAM que usa cada una: una ✕ por app, o **Cerrar todas** arriba:
 
 <img src="docs/abiertas.png" width="600" alt="Apps abiertas en el launcher nuevo">
+
+**Ícono y color de un botón grande:** al elegir otra app para un botón se le pone un ícono dibujado (TV, Películas,
+TV y cine, Video, Música, Radio, Navegar) o el de la app, y uno de 8 colores, con vista previa:
+
+<img src="docs/estilo.png" width="600" alt="Elegir ícono y color de un botón en el launcher nuevo">
 
 ## Qué tiene ahora que ADAYO no tenía
 
@@ -30,6 +35,7 @@ Reemplaza la pantalla de inicio de fábrica por una más liviana y pensada para 
 | Red Wi‑Fi | solo un ícono | **nombre de la red**; un toque abre los ajustes de Wi‑Fi |
 | Ver las apps abiertas | no | **sí**, con la RAM que usa cada una |
 | Cerrar apps | difícil: había que entrar a Ajustes → Aplicaciones y forzar la detención de cada una | **un toque** por app, o **Cerrar todas** |
+| Elegir qué app abre cada botón | no | **sí**, manteniendo apretado, con **ícono y color** a elección |
 | Atenuar la pantalla de noche | no | **sí**, botón de la luna; se recuerda al apagar el auto |
 | Evitar el ruido de FM al encender | no: arrancaba en la última fuente, y con mala señal sonaba el ruido de la FM | **sí**: chip rojo que deja Bluetooth, que arranca en silencio |
 
@@ -39,7 +45,7 @@ Reemplaza la pantalla de inicio de fábrica por una más liviana y pensada para 
   Sin señal muestra "–", nunca una velocidad vieja.
 - **Botones grandes**, cómodos con el auto en movimiento: cuatro principales (Waze, YouTube, Radio, Teléfono)
   y cuatro chicos (Música BT, USB, Ecualizador, Todas las apps). **Manteniendo apretado** un botón grande se
-  elige qué app abre.
+  elige qué app abre, y después su ícono (por ejemplo una TV para una app de televisión) y su color.
 - **Apps abiertas:** cuántas hay, cuánta RAM usa cada una, y un botón para cerrarlas (una o todas).
 - **Luna:** oscurece la pantalla de inicio cuando el brillo molesta de noche. Otro toque, normal.
 - **Sin ruido de FM al dar contacto:** la radio retoma la última fuente del sistema. Si quedó en FM aparece un

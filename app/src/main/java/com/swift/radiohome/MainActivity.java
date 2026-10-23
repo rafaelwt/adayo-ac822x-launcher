@@ -69,6 +69,20 @@ public class MainActivity extends Activity {
             {"Teléfono", "Bluetooth", IconView.PHONE, 0xffc084fc, 0xff2a1533, 0xff3f204d,
                     "com.adayo.bluetooth", "com.adayo.bluetooth.hfp.HfpMainActivity"},
     };
+    /** Icons a chosen app's big tile can wear; 0 = the app's own icon. */
+    private static final int[] STYLE_ICONS = {-1, IconView.TV, IconView.MOVIE, IconView.TV_MOVIE, IconView.PLAY,
+            IconView.MUSIC, IconView.RADIO, IconView.NAV};
+    private static final String[] STYLE_LABELS = {"De la app", "TV", "Películas", "TV y cine", "Video", "Música",
+            "Radio", "Navegar"};
+    /** Tile colours: icon, fill, pressed. The first six are the Home's own. */
+    private static final int[][] PALETTE = {
+            {0xfff87171, 0xff3a1212, 0xff571c1c}, {0xfffbbf24, 0xff33230c, 0xff4d3614},
+            {0xff4ade80, 0xff0f2e1c, 0xff17452a}, {0xff2dd4bf, 0xff0c2e2b, 0xff12453f},
+            {0xff38bdf8, 0xff0f2a3a, 0xff1a4157}, {0xffc084fc, 0xff2a1533, 0xff3f204d},
+            {0xfffb923c, 0xff3a1d0c, 0xff572c13}, {0xffd4d4d4, 0xff1c1c1c, 0xff2a2a2a}};
+    private static final String[] PALETTE_NAMES = {"Rojo", "Ámbar", "Verde", "Turquesa", "Celeste", "Morado",
+            "Naranja", "Gris"};
+
     private static final Object[][] SMALL = {
             {"Música BT", IconView.BLUETOOTH, "com.adayo.bluetooth", "com.adayo.bluetooth.a2dp.A2dpMainActivity"},
             {"USB", IconView.USB, "com.adayo.media", "com.adayo.media.MediaActivity$USB1Activity"},
@@ -84,14 +98,15 @@ public class MainActivity extends Activity {
     private SharedPreferences ui;
 
     private FrameLayout root;
-    private View home, apps, open;
+    private View home, apps, open, style;
     private LinearLayout bigRow;
     private TextView clock, date, gpsValue, gpsUnit, wifiText, openCount;
     private IconView wifiIcon;
     private TextView gridCaption, gridTitle, gridBackLabel, gridAction;
     private GridView grid;
     private LinearLayout openList;
-    private TextView freeRam, closeAll;
+    private TextView freeRam, openTitleCount;
+    private View closeAll;
     private LocationManager locationManager;
 
     private int satellitesUsed;
@@ -162,11 +177,14 @@ public class MainActivity extends Activity {
         home = buildHome();
         apps = buildApps();
         open = buildOpen();
+        style = buildStyle();
         apps.setVisibility(View.GONE);
         open.setVisibility(View.GONE);
+        style.setVisibility(View.GONE);
         root.addView(home);
         root.addView(apps);
         root.addView(open);
+        root.addView(style);
         setContentView(root);
         setDimmed(ui.getBoolean("dim", false));
     }
@@ -368,10 +386,16 @@ public class MainActivity extends Activity {
         Object[] t = BIG[slot];
         LinearLayout tile = vertical();
         tile.setPadding(dp(18), dp(18), dp(18), dp(18));
-        tile.setBackgroundDrawable(background((Integer) t[4], (Integer) t[5], 0, 22));
         ActivityInfo chosen = chosenApp(slot);
+        int styleIcon = chosen == null ? 0 : tiles.getInt("icon" + slot, 0);
+        int styleColor = chosen == null ? -1 : tiles.getInt("color" + slot, -1);
+        int fg = styleColor >= 0 ? PALETTE[styleColor][0] : (Integer) t[3];
+        tile.setBackgroundDrawable(background(styleColor >= 0 ? PALETTE[styleColor][1] : (Integer) t[4],
+                styleColor >= 0 ? PALETTE[styleColor][2] : (Integer) t[5], 0, 22));
         if (chosen == null) {
             tile.addView(new IconView(this, (Integer) t[2], (Integer) t[3], 2f), new LinearLayout.LayoutParams(dp(52), dp(52)));
+        } else if (styleIcon > 0) {
+            tile.addView(new IconView(this, STYLE_ICONS[styleIcon], fg, 2f), new LinearLayout.LayoutParams(dp(52), dp(52)));
         } else {
             ImageView icon = new ImageView(this);
             icon.setImageDrawable(chosen.loadIcon(getPackageManager()));
@@ -383,7 +407,8 @@ public class MainActivity extends Activity {
         title.setSingleLine(true);
         title.setEllipsize(TextUtils.TruncateAt.END);
         tile.addView(title, wrap());
-        tile.addView(text(13, light, 0xffb8b8b8, chosen == null ? (String) t[1] : " "), wrap());
+        tile.addView(text(13, light, 0xffb8b8b8, chosen == null ? (String) t[1]
+                : styleIcon > 0 ? STYLE_LABELS[styleIcon] : " "), wrap());
         tile.setOnClickListener(chosen == null ? launcher((String) t[6], (String) t[7])
                 : launcher(chosen.packageName, chosen.name));
         tile.setOnLongClickListener(new View.OnLongClickListener() {
@@ -402,6 +427,9 @@ public class MainActivity extends Activity {
         if (saved == null) return null;
         ComponentName cn = ComponentName.unflattenFromString(saved);
         if (cn == null) return null;
+        // Picking the tile's own stock app means "back to stock": its drawn icon and captions,
+        // not the app's PNG icon and bare name (YouTube -> Chrome -> RadioTube lost the ▶ icon).
+        if (cn.getPackageName().equals(BIG[slot][6])) return null;
         try {
             return getPackageManager().getActivityInfo(cn, 0);
         } catch (PackageManager.NameNotFoundException e) {
@@ -482,7 +510,7 @@ public class MainActivity extends Activity {
                     startSettings(Settings.ACTION_SETTINGS);
                 } else {
                     // Back to the tile's stock app.
-                    tiles.edit().remove("big" + pickSlot).apply();
+                    resetBigTile(pickSlot);
                     replaceBigTile(pickSlot);
                     showHome();
                 }
@@ -505,9 +533,13 @@ public class MainActivity extends Activity {
                 if (pickSlot < 0) {
                     start(cn, ri.activityInfo.packageName);
                 } else {
-                    tiles.edit().putString("big" + pickSlot, cn.flattenToString()).apply();
-                    replaceBigTile(pickSlot);
-                    showHome();
+                    if (cn.getPackageName().equals(BIG[pickSlot][6])) {
+                        resetBigTile(pickSlot); // its stock app: back to stock
+                        replaceBigTile(pickSlot);
+                        showHome();
+                    } else {
+                        showStyle(pickSlot, cn, ri.loadLabel(getPackageManager()).toString()); // then its icon and colour
+                    }
                 }
             }
         });
@@ -625,27 +657,35 @@ public class MainActivity extends Activity {
             }
         });
         header.addView(back, new FrameLayout.LayoutParams(-2, dp(52), Gravity.LEFT | Gravity.CENTER_VERTICAL));
-        header.addView(text(30, light, 0xfff2f2f2, "Apps abiertas"), new FrameLayout.LayoutParams(-2, -2, Gravity.CENTER));
+        LinearLayout title = horizontal();
+        title.setGravity(Gravity.CENTER_VERTICAL);
+        title.addView(text(30, light, 0xfff2f2f2, "Apps abiertas"), wrap());
+        openTitleCount = text(30, medium, 0xfffbbf24); // same amber as the Home chip
+        openTitleCount.setPadding(dp(10), 0, 0, 0);
+        title.addView(openTitleCount, wrap());
+        // Left, after "Inicio" (not centred): centred it ran into RAM + "Cerrar todas" on the right.
+        FrameLayout.LayoutParams tp = new FrameLayout.LayoutParams(-2, -2, Gravity.LEFT | Gravity.CENTER_VERTICAL);
+        tp.leftMargin = dp(140);
+        header.addView(title, tp);
+
+        // Right side: free RAM, then "Cerrar todas" as a compact pill (it was a full-width red bar below the list).
+        LinearLayout right = horizontal();
+        right.setGravity(Gravity.CENTER_VERTICAL);
         LinearLayout ram = vertical();
         ram.setGravity(Gravity.RIGHT);
         ram.addView(text(12, medium, 0xffa3a3a3, "RAM LIBRE"), wrap());
         freeRam = text(22, light, 0xfff2f2f2);
         ram.addView(freeRam, wrap());
-        header.addView(ram, new FrameLayout.LayoutParams(-2, -2, Gravity.RIGHT | Gravity.CENTER_VERTICAL));
-        col.addView(header, new LinearLayout.LayoutParams(-1, dp(56)));
-
-        ScrollView scroll = new ScrollView(this);
-        scroll.setVerticalScrollBarEnabled(false);
-        openList = vertical();
-        scroll.addView(openList, new FrameLayout.LayoutParams(-1, -2));
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, 0, 1);
-        lp.topMargin = dp(14);
-        col.addView(scroll, lp);
-
-        closeAll = text(20, medium, Color.WHITE, "Cerrar todas");
-        closeAll.setGravity(Gravity.CENTER);
-        closeAll.setBackgroundDrawable(background(0xff7f1d1d, 0xff991b1b, 0, 16));
-        closeAll.setOnClickListener(new View.OnClickListener() {
+        right.addView(ram, wrap());
+        LinearLayout all = horizontal();
+        all.setGravity(Gravity.CENTER_VERTICAL);
+        all.setPadding(dp(14), 0, dp(18), 0);
+        all.setBackgroundDrawable(background(0xff1a0d0d, 0xff3a1414, 0xff7f1d1d, 26));
+        all.addView(new IconView(this, IconView.CLOSE, 0xfffca5a5, 2.4f), new LinearLayout.LayoutParams(dp(18), dp(18)));
+        TextView allLabel = text(17, light, 0xfffca5a5, "Cerrar todas");
+        allLabel.setPadding(dp(8), 0, 0, 0);
+        all.addView(allLabel, wrap());
+        all.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 List<String> pkgs = new ArrayList<String>();
@@ -656,9 +696,21 @@ public class MainActivity extends Activity {
                 close(pkgs);
             }
         });
-        LinearLayout.LayoutParams cp = new LinearLayout.LayoutParams(-1, dp(56));
-        cp.topMargin = dp(14);
-        col.addView(closeAll, cp);
+        LinearLayout.LayoutParams ap = new LinearLayout.LayoutParams(-2, dp(52));
+        ap.leftMargin = dp(16);
+        right.addView(all, ap);
+        closeAll = all;
+        header.addView(right, new FrameLayout.LayoutParams(-2, -2, Gravity.RIGHT | Gravity.CENTER_VERTICAL));
+        col.addView(header, new LinearLayout.LayoutParams(-1, dp(56)));
+
+        ScrollView scroll = new ScrollView(this);
+        scroll.setVerticalScrollBarEnabled(false);
+        openList = vertical();
+        scroll.addView(openList, new FrameLayout.LayoutParams(-1, -2));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, 0, 1);
+        lp.topMargin = dp(14);
+        col.addView(scroll, lp);
+
         return col;
     }
 
@@ -692,6 +744,7 @@ public class MainActivity extends Activity {
     private void fillOpen(List<RunningApps.App> list, int freeMb) {
         freeRam.setText(freeMb + " MB");
         openCount.setText(String.valueOf(list.size()));
+        openTitleCount.setText(list.isEmpty() ? "" : String.valueOf(list.size()));
         openList.removeAllViews();
         if (list.isEmpty()) {
             openList.addView(emptyText("No hay apps abiertas"));
@@ -714,21 +767,18 @@ public class MainActivity extends Activity {
             TextView ram = text(16, light, 0xffa3a3a3, a.ramMb + " MB");
             ram.setGravity(Gravity.RIGHT);
             row.addView(ram, new LinearLayout.LayoutParams(dp(72), -2));
+            // A round ✕ (48 dp, a finger's width) instead of the long "Cerrar" button.
             LinearLayout close = horizontal();
-            close.setGravity(Gravity.CENTER_VERTICAL);
-            close.setPadding(dp(14), 0, dp(18), 0);
-            close.setBackgroundDrawable(background(0xff2a1414, 0xff4a2222, 0xff4a2222, 12));
-            close.addView(new IconView(this, IconView.CLOSE, 0xfffca5a5, 2.2f), new LinearLayout.LayoutParams(dp(18), dp(18)));
-            TextView label = text(17, light, 0xfffca5a5, "Cerrar");
-            label.setPadding(dp(8), 0, 0, 0);
-            close.addView(label, wrap());
+            close.setGravity(Gravity.CENTER);
+            close.setBackgroundDrawable(background(0xff2a1414, 0xff4a2222, 0xff4a2222, 24));
+            close.addView(new IconView(this, IconView.CLOSE, 0xfffca5a5, 2.4f), new LinearLayout.LayoutParams(dp(20), dp(20)));
             close.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     close(Collections.singletonList(a.pkg));
                 }
             });
-            LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(-2, dp(48));
+            LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(dp(48), dp(48));
             clp.leftMargin = dp(16);
             row.addView(close, clp);
             LinearLayout.LayoutParams rp = new LinearLayout.LayoutParams(-1, dp(62));
@@ -841,6 +891,7 @@ public class MainActivity extends Activity {
         home.setVisibility(screen == home ? View.VISIBLE : View.GONE);
         apps.setVisibility(screen == apps ? View.VISIBLE : View.GONE);
         open.setVisibility(screen == open ? View.VISIBLE : View.GONE);
+        style.setVisibility(screen == style ? View.VISIBLE : View.GONE);
     }
 
     private void showHome() {
@@ -851,6 +902,206 @@ public class MainActivity extends Activity {
         openList.removeAllViews();
         pickSlot = -1;
         refreshOpenCount();
+    }
+
+    // ---- Icon and colour of a chosen app's big tile ----
+
+    private int styleSlot = -1, styleIcon, styleColor;
+    private ComponentName styleApp;
+    private String styleName;
+    private TextView styleCaption;
+    private LinearLayout stylePreview;
+    private final View[] styleIconCells = new View[STYLE_ICONS.length];
+    private final View[] styleColorCells = new View[PALETTE.length];
+
+    private void resetBigTile(int slot) {
+        tiles.edit().remove("big" + slot).remove("icon" + slot).remove("color" + slot).apply();
+    }
+
+    /** After picking an app for big tile {@code slot}: choose its icon (its own, or a drawn one) and colour. */
+    private void showStyle(int slot, ComponentName app, String name) {
+        styleSlot = slot;
+        styleApp = app;
+        styleName = name;
+        boolean same = app.flattenToString().equals(tiles.getString("big" + slot, null));
+        styleIcon = same ? tiles.getInt("icon" + slot, 0) : 0;
+        styleColor = same ? tiles.getInt("color" + slot, -1) : -1;
+        if (styleColor < 0) styleColor = defaultColor(slot);
+        styleCaption.setText(("Botón " + (slot + 1) + " · app: " + name).toUpperCase(ES));
+        refreshStyle();
+        show(style);
+    }
+
+    /** The palette entry of the tile's stock colour (the first six are the Home's own), else gray. */
+    private int defaultColor(int slot) {
+        for (int i = 0; i < PALETTE.length; i++) {
+            if (PALETTE[i][1] == (Integer) BIG[slot][4]) return i;
+        }
+        return PALETTE.length - 1;
+    }
+
+    private View buildStyle() {
+        LinearLayout col = vertical();
+        col.setPadding(dp(24), dp(20), dp(24), dp(22));
+
+        FrameLayout header = new FrameLayout(this);
+        LinearLayout back = pill(IconView.BACK);
+        ((TextView) back.getChildAt(1)).setText("Atrás");
+        back.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                show(apps); // back to the app list, same tile
+            }
+        });
+        header.addView(back, new FrameLayout.LayoutParams(-2, dp(52), Gravity.LEFT | Gravity.CENTER_VERTICAL));
+        LinearLayout titles = vertical();
+        titles.setGravity(Gravity.CENTER_HORIZONTAL);
+        styleCaption = text(12, medium, 0xff4ade80);
+        titles.addView(styleCaption, wrap());
+        titles.addView(text(26, light, 0xfff2f2f2, "Ícono y color"), wrap());
+        header.addView(titles, new FrameLayout.LayoutParams(-2, -2, Gravity.CENTER));
+        TextView done = text(18, medium, 0xff04140a, "Listo");
+        done.setGravity(Gravity.CENTER);
+        done.setPadding(dp(24), 0, dp(24), 0);
+        done.setBackgroundDrawable(background(0xff4ade80, 0xff22c55e, 0, 26));
+        done.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                tiles.edit().putString("big" + styleSlot, styleApp.flattenToString())
+                        .putInt("icon" + styleSlot, styleIcon).putInt("color" + styleSlot, styleColor).apply();
+                replaceBigTile(styleSlot);
+                showHome();
+            }
+        });
+        header.addView(done, new FrameLayout.LayoutParams(-2, dp(52), Gravity.RIGHT | Gravity.CENTER_VERTICAL));
+        col.addView(header, new LinearLayout.LayoutParams(-1, dp(56)));
+
+        LinearLayout body = horizontal();
+        LinearLayout left = vertical();
+        left.addView(text(12, medium, 0xffa3a3a3, "ASÍ QUEDA"), wrap());
+        stylePreview = vertical();
+        stylePreview.setPadding(dp(18), dp(18), dp(18), dp(18));
+        LinearLayout.LayoutParams pp = new LinearLayout.LayoutParams(dp(176), dp(196));
+        pp.topMargin = dp(8);
+        left.addView(stylePreview, pp);
+        body.addView(left, new LinearLayout.LayoutParams(dp(176), -1));
+
+        LinearLayout right = vertical();
+        right.addView(text(12, medium, 0xffa3a3a3, "ÍCONO"), wrap());
+        for (int row = 0; row < 2; row++) {
+            LinearLayout line = horizontal();
+            for (int k = 0; k < 4; k++) {
+                final int i = row * 4 + k;
+                LinearLayout cell = vertical();
+                cell.setGravity(Gravity.CENTER);
+                if (STYLE_ICONS[i] < 0) {
+                    ImageView own = new ImageView(this);
+                    own.setTag("own");
+                    cell.addView(own, new LinearLayout.LayoutParams(dp(34), dp(34)));
+                } else {
+                    IconView iv = new IconView(this, STYLE_ICONS[i], 0xffd4d4d4, 2f);
+                    iv.setTag("icon");
+                    cell.addView(iv, new LinearLayout.LayoutParams(dp(34), dp(34)));
+                }
+                TextView label = text(13, light, 0xffe6e6e6, STYLE_LABELS[i]);
+                label.setPadding(0, dp(6), 0, 0);
+                cell.addView(label, wrap());
+                cell.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        styleIcon = i;
+                        refreshStyle();
+                    }
+                });
+                styleIconCells[i] = cell;
+                LinearLayout.LayoutParams cp = new LinearLayout.LayoutParams(0, dp(84), 1);
+                if (k > 0) cp.leftMargin = dp(10);
+                line.addView(cell, cp);
+            }
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
+            lp.topMargin = dp(row == 0 ? 10 : 10);
+            right.addView(line, lp);
+        }
+        TextView colorTitle = text(12, medium, 0xffa3a3a3, "COLOR");
+        colorTitle.setPadding(0, dp(14), 0, 0);
+        right.addView(colorTitle, wrap());
+        LinearLayout swatches = horizontal();
+        for (int i = 0; i < PALETTE.length; i++) {
+            final int c = i;
+            LinearLayout sw = horizontal();
+            sw.setGravity(Gravity.CENTER);
+            sw.setContentDescription(PALETTE_NAMES[i]);
+            View dot = new View(this);
+            dot.setBackgroundDrawable(shape(PALETTE[i][0], 0, 9));
+            sw.addView(dot, new LinearLayout.LayoutParams(dp(18), dp(18)));
+            sw.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    styleColor = c;
+                    refreshStyle();
+                }
+            });
+            styleColorCells[i] = sw;
+            LinearLayout.LayoutParams sp = new LinearLayout.LayoutParams(0, dp(52), 1);
+            if (i > 0) sp.leftMargin = dp(8);
+            swatches.addView(sw, sp);
+        }
+        LinearLayout.LayoutParams swp = new LinearLayout.LayoutParams(-1, -2);
+        swp.topMargin = dp(10);
+        right.addView(swatches, swp);
+        LinearLayout.LayoutParams rp = new LinearLayout.LayoutParams(0, -1, 1);
+        rp.leftMargin = dp(20);
+        body.addView(right, rp);
+
+        LinearLayout.LayoutParams bp = new LinearLayout.LayoutParams(-1, 0, 1);
+        bp.topMargin = dp(16);
+        col.addView(body, bp);
+        return col;
+    }
+
+    /** A selected cell: a thicker border than {@link #shape}'s hairline, so it reads at a glance. */
+    private GradientDrawable marked(int fill, int stroke, int strokeDp) {
+        GradientDrawable g = shape(fill, 0, 14);
+        g.setStroke(dp(strokeDp), stroke);
+        return g;
+    }
+
+    /** Marks the chosen icon and colour and redraws the preview tile. */
+    private void refreshStyle() {
+        int[] pal = PALETTE[styleColor];
+        Drawable appIcon = null;
+        try {
+            appIcon = getPackageManager().getActivityIcon(styleApp);
+        } catch (PackageManager.NameNotFoundException ignored) {
+        }
+        for (int i = 0; i < styleIconCells.length; i++) {
+            boolean on = i == styleIcon;
+            View cell = styleIconCells[i];
+            cell.setBackgroundDrawable(on ? marked(pal[1], pal[0], 2) : shape(0xff111111, 0xff262626, 14));
+            View own = cell.findViewWithTag("own");
+            if (own != null) ((ImageView) own).setImageDrawable(appIcon);
+            View iv = cell.findViewWithTag("icon");
+            if (iv != null) ((IconView) iv).setColor(on ? pal[0] : 0xffd4d4d4);
+        }
+        for (int i = 0; i < styleColorCells.length; i++) {
+            styleColorCells[i].setBackgroundDrawable(i == styleColor ? marked(PALETTE[i][1], Color.WHITE, 3)
+                    : shape(PALETTE[i][1], 0xff2a2a2a, 14));
+        }
+        stylePreview.removeAllViews();
+        stylePreview.setBackgroundDrawable(shape(pal[1], 0, 22));
+        if (styleIcon > 0) {
+            stylePreview.addView(new IconView(this, STYLE_ICONS[styleIcon], pal[0], 2f), new LinearLayout.LayoutParams(dp(52), dp(52)));
+        } else {
+            ImageView icon = new ImageView(this);
+            icon.setImageDrawable(appIcon);
+            stylePreview.addView(icon, new LinearLayout.LayoutParams(dp(52), dp(52)));
+        }
+        stylePreview.addView(new View(this), new LinearLayout.LayoutParams(1, 0, 1));
+        TextView title = text(26, medium, 0xfff2f2f2, styleName);
+        title.setSingleLine(true);
+        title.setEllipsize(TextUtils.TruncateAt.END);
+        stylePreview.addView(title, wrap());
+        stylePreview.addView(text(13, light, 0xffb8b8b8, styleIcon > 0 ? STYLE_LABELS[styleIcon] : " "), wrap());
     }
 
     // ---- Status ----
