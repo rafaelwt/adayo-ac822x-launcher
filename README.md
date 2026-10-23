@@ -31,13 +31,14 @@ Reemplaza la pantalla de inicio de fábrica por una más liviana y pensada para 
 
 | | Antes (launcher de ADAYO) | Ahora (este launcher) |
 |---|---|---|
-| RAM del launcher (PSS) | 22,3 MB | **8,4 MB** (2,7 veces menos) |
-| CPU con el inicio en pantalla | — | **0 %** |
-| Tamaño del APK | — | **118 KB** |
+| RAM del launcher (PSS) | 18,9 MB recién abierto · 22,3 MB tras horas de uso | **8,4–8,8 MB** |
+| CPU con el inicio en pantalla | ~0 % | **0 %** (en reposo ninguno gasta) |
+| Tamaño del APK | 7,5 MB | **118 KB** (64 veces más chico) |
 | Velocidad del GPS en el inicio | no | **sí** |
 | Cerrar apps abiertas | no | **sí, con la RAM de cada una** |
 
-Medido en la propia radio con `dumpsys meminfo` y `top`: el "antes" el 21/10/2026 y el "ahora" el 22/10/2026.
+Medido en la propia radio con `dumpsys meminfo`, `top` y `ls -l` el 21 y el 22/10/2026, abriendo el launcher de ADAYO
+un momento para medirlo en las mismas condiciones.
 La **RAM libre del equipo** pasó de ~20 MB a cientos de MB, pero eso vino sobre todo de desactivar apps que no se
 usaban (servicios de Google, etc.), no solo del launcher. Por eso no está en la tabla.
 
@@ -57,6 +58,8 @@ el chip de la FM) usan el ADB local de la propia radio.
 
 Ajustes → Aplicaciones → Inicio Swift → **Borrar valores predeterminados**, y en el siguiente Home elegir el de
 ADAYO. El launcher de fábrica nunca se desactiva.
+
+La base de fuentes de ADAYO que toca el chip de la FM tiene su respaldo original en [`docs/adayo/`](docs/adayo/).
 
 ## Cambiar botones
 
