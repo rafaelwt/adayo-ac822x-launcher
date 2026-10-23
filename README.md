@@ -10,11 +10,24 @@ Reemplaza la pantalla de inicio de fábrica por una más liviana y pensada para 
 |---|---|
 | ![Pantalla de inicio original de ADAYO](docs/antes.png) | ![Pantalla de inicio de este launcher](docs/despues.png) |
 
-| Todas las apps | Apps abiertas |
-|---|---|
-| ![Todas las apps](docs/todas.png) | ![Apps abiertas con la RAM de cada una](docs/abiertas.png) |
+### Pantallas del launcher nuevo
 
-## Qué mejora
+| Todas las apps (nuevo) | Apps abiertas, con la RAM de cada una (nuevo) |
+|---|---|
+| ![Todas las apps del launcher nuevo](docs/todas.png) | ![Apps abiertas del launcher nuevo](docs/abiertas.png) |
+
+## Qué tiene ahora que ADAYO no tenía
+
+| Función | Launcher de ADAYO | Este launcher |
+|---|---|---|
+| Velocidad del GPS y satélites | no | **sí**, en grande en el inicio |
+| Red Wi‑Fi | solo un ícono | **nombre de la red**; un toque abre los ajustes de Wi‑Fi |
+| Ver las apps abiertas | no | **sí**, con la RAM que usa cada una |
+| Cerrar apps | difícil: había que entrar a Ajustes → Aplicaciones y forzar la detención de cada una | **un toque** por app, o **Cerrar todas** |
+| Atenuar la pantalla de noche | no | **sí**, botón de la luna; se recuerda al apagar el auto |
+| Evitar el ruido de FM al encender | no: arrancaba en la última fuente, y con mala señal sonaba el ruido de la FM | **sí**: chip rojo que deja Bluetooth, que arranca en silencio |
+
+## En resumen
 
 - **La velocidad, en grande.** Lo que se mira de reojo al manejar: km/h del GPS con los satélites al lado.
   Sin señal muestra "–", nunca una velocidad vieja.
@@ -34,8 +47,6 @@ Reemplaza la pantalla de inicio de fábrica por una más liviana y pensada para 
 | RAM del launcher (PSS) | 18,9 MB recién abierto · 22,3 MB tras horas de uso | **8,4–8,8 MB** |
 | CPU con el inicio en pantalla | ~0 % | **0 %** (en reposo ninguno gasta) |
 | Tamaño del APK | 7,5 MB | **118 KB** (64 veces más chico) |
-| Velocidad del GPS en el inicio | no | **sí** |
-| Cerrar apps abiertas | no | **sí, con la RAM de cada una** |
 
 Medido en la propia radio con `dumpsys meminfo`, `top` y `ls -l` el 21 y el 22/10/2026, abriendo el launcher de ADAYO
 un momento para medirlo en las mismas condiciones.
